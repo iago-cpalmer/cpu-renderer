@@ -143,11 +143,15 @@
   <ItemGroup>
     <ClCompile Include="Program.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="Vertex.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

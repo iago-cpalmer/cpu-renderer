@@ -1,4 +1,6 @@
 #pragma once
+#ifndef WINDOW_H
+#define WINDOW_H
 
 #include <Windows.h>
 
@@ -28,3 +30,5 @@ private:
 	HWND m_hWnd;
 	HDC m_HDC;
 };
+
+#endif // !WINDOW_H

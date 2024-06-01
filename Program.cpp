@@ -1,12 +1,12 @@
 // CPURenderer.cpp 
 #include <iostream>
 #include "Window.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include "Texture.h"
 #include "Renderer.h"
-
 int main()
 {
-    COLORREF blackColor = RGB(0, 0, 0);
-
     Window* pWindow = new Window();
 
     Renderer* renderer = new Renderer();
@@ -14,12 +14,18 @@ int main()
     bool windowShouldClose = false;
 
     
+    Vertex v1{ gmtl::Vec3f(300, 400, 0), gmtl::Vec3f(0,0,255), gmtl::Vec2f(0.5f,1.0f)};
+    Vertex v2{ gmtl::Vec3f(100, 50, 0), gmtl::Vec3f(255,0,0), gmtl::Vec2f(0.0f,0.0f) };
+    Vertex v3{ gmtl::Vec3f(500, 50, 0), gmtl::Vec3f(0,255,0), gmtl::Vec2f(1.0f,0.0f) };
 
-    gmtl::Vec3f v1(150, 150, 0);
-    gmtl::Vec3f v2(100, 300, 0);
-    gmtl::Vec3f v3(500, 360, 0);
+    // load texture
+    int width, height, channels;
+    //unsigned char* texture = nullptr;
+    
+    Texture* texture = new Texture("res/test.jpg");
 
-    renderer->FillTriangle(pWindow, v1, v2, v3);
+
+    renderer->FillTriangle(pWindow, v1, v2, v3, texture);
 
     while (!windowShouldClose) {
         // Process messages
@@ -27,15 +33,7 @@ int main()
             windowShouldClose = true;
         }
 
-        renderer->FillTriangle(pWindow, v1, v2, v3);
-        // Render commands
-        /*
-        for (int i = 0; i < 50; i++) {
-            for (int j = 0; j < 50; j++) {
-                pWindow->SetPixelAt(100+i, 100+j, blackColor);
-            }
-        }*/
-        
+        renderer->FillTriangle(pWindow, v1, v2, v3, texture);        
     }
 
     delete pWindow;
