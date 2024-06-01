@@ -9,7 +9,7 @@
 #include <gmtl/Matrix.h>
 #include "Vertex.h"
 #include "Texture.h"
-
+#include <cmath>
 class Renderer
 {
 public:
