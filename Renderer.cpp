@@ -61,9 +61,11 @@ void Renderer::FillTriangleTopFlat(Window* window, Vertex v1, Vertex v2, Vertex 
 			float vRight = lerp(v1.UV[1], v3.UV[1], yl);
 			float vLeft = lerp(v2.UV[1], v3.UV[1], yl);
 
-			COLORREF texColor = texture->GetColorAtUV(lerp(uLeft, uRight, xl), lerp(vLeft, vRight, xl));
-
-			window->SetPixelAt(i, y, texColor);
+			if (texture != nullptr)
+			{
+				color = texture->GetColorAtUV(lerp(uLeft, uRight, xl), lerp(vLeft, vRight, xl));
+			}
+			window->SetPixelAt(i, y, color);
 		}
 	}
 }
@@ -124,9 +126,12 @@ void Renderer::FillTriangleBottomFlat(Window* window, Vertex v1, Vertex v2, Vert
 			float vLeft = lerp(v1.UV[1], v2.UV[1], yl);
 			float vRight = lerp(v1.UV[1], v3.UV[1], yl);
 
-			COLORREF texColor = texture->GetColorAtUV(lerp(uLeft, uRight, xl), lerp(vLeft, vRight, xl));
-
-			window->SetPixelAt(i, y, texColor);
+			
+			if (texture != nullptr)
+			{
+				color = texture->GetColorAtUV(lerp(uLeft, uRight, xl), lerp(vLeft, vRight, xl));
+			}
+			window->SetPixelAt(i, y, color);
 		}
 	}
 }
@@ -152,7 +157,21 @@ void Renderer::FillTriangle(Window* window, Vertex v1, Vertex v2, Vertex v3, Tex
 		} else {
 			x = v3.Position[0] + floor((v3.Position[1] - v2.Position[1]) / m);
 		}
-		Vertex p{ gmtl::Vec3f(x, v2.Position[1], v3.Position[2]),gmtl::Vec3f() }; // TODO: Compute x & z values from v1-v3 depending on height (v2.y)
+		// Calculate intermediate uv coordinates
+
+		gmtl::Vec3f cuttingCoord = gmtl::Vec3f(x, v2.Position[1], v3.Position[2]);
+
+		float yl = (float)(cuttingCoord[1] - v1.Position[1]) / (v3.Position[1] - v1.Position[1]);
+		float xl = (float)(cuttingCoord[0] - v1.Position[0]) / (v3.Position[0] - v1.Position[0]);
+
+		float uTop = lerp(v1.UV[0], v3.UV[0], xl);
+ 		float vTop = lerp(v1.UV[1], v3.UV[1], yl);
+
+		float u = uTop;
+		float v = vTop;
+
+		Vertex p{ cuttingCoord, gmtl::Vec3f(), gmtl::Vec2f(u, v) }; // TODO: Compute x & z values from v1-v3 depending on height (v2.y)
+
 		FillTriangleBottomFlat(window, v1, v2, p, texture);
 		FillTriangleTopFlat(window, p, v2, v3, texture);
 	}
@@ -161,6 +180,10 @@ void Renderer::FillTriangle(Window* window, Vertex v1, Vertex v2, Vertex v3, Tex
 
 void Renderer::SortVertices(Vertex* v1, Vertex* v2, Vertex* v3) {
 	// Sort vertices so v1.y<=v2.y<=v3.y
+	gmtl::Vec2f uv1 = v1->UV;
+	gmtl::Vec2f uv2 = v2->UV;
+	gmtl::Vec2f uv3 = v3->UV;
+
 	Vertex aux;
 	if ((*v1).Position[1] > (*v2).Position[1] && (*v1).Position[1] > (*v3).Position[1]) {
 		aux = *v1;
@@ -187,7 +210,10 @@ void Renderer::SortVertices(Vertex* v1, Vertex* v2, Vertex* v3) {
 		*v1 = *v2;
 		*v2 = aux;
 	}
-
+	/*
+	v1->UV = uv1;
+	v2->UV = uv2;
+	v3->UV = uv3;*/
 }
 
 void Renderer::DrawWireframe(Window* window, Vertex v1, Vertex v2, Vertex v3)
