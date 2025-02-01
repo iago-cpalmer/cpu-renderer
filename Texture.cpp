@@ -1,32 +1,61 @@
 #include "Texture.h"
 
+#include <algorithm>
 
-Texture::Texture(const char* filename) {
+// ====================================
+//  PUBLIC
+// ====================================
+
+// --------------------------------
+//  Constructors
+// --------------------------------
+Texture::Texture(const char* file_name) {
     // Load image using stb_image
-    Data = stbi_load(filename, &width, &height, &channels, 0);
-    if (!Data) {
-        std::cerr << "Failed to load image: " << filename << std::endl;
-        
+    mp_data = stbi_load(file_name, &m_width, &m_height, &m_channels, 0);
+
+    if (!mp_data) {
+        std::cerr << "Failed to load image: " << file_name << std::endl;
     }
+
+    m_wrapping_mode = WrappingMode::CLAMP_TO_EDGE;
 }
 
-COLORREF Texture::GetColorAtUV(float u, float v)
+// --------------------------------
+//  Functions
+// --------------------------------
+
+void Texture::SetWrappingMode(const WrappingMode r_wrapping_mode) noexcept
 {
-    if (u > 1 ) {
-        u = 1;
-    }
-    if (v > 1) {
-        v = 1;
-    }
-    if (u < 0) {
-        u = 0;
-    }
-    if (v < 0 ) {
-        v = 0;
-    }
-    int x = u * (width-1);
-    int y = v * (height-1);
-    int index = (y * width + x) * channels;
-    return RGB(Data[index + 0], Data[index + 1], Data[index + 2]);
+    m_wrapping_mode = r_wrapping_mode;
 }
 
+WrappingMode Texture::GetWrappingMode() noexcept
+{
+    return m_wrapping_mode;
+}
+
+COLORREF Texture::GetColorAtUV(float r_u, float r_v) noexcept
+{
+    switch (m_wrapping_mode)
+    {
+    case WrappingMode::CLAMP_TO_EDGE:
+        r_u = std::clamp(r_u, 0.0f, 1.0f);
+        r_v = std::clamp(r_v, 0.0f, 1.0f);
+        break;
+    case WrappingMode::REPEAT:
+        r_u = std::fmodf(r_u, 1.0f);
+        r_v = std::fmodf(r_v, 1.0f);
+        break;
+    }
+    
+    const int x = r_u * (m_width-1);
+    const int y = r_v * (m_height-1);
+
+    const int index = (y * m_width + x) * m_channels;
+
+    return RGB(mp_data[index + 0], mp_data[index + 1], mp_data[index + 2]);
+}
+
+// ====================================
+//  PRIVATE
+// ====================================

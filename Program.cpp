@@ -18,12 +18,12 @@ int main()
     Vertex v2{ gmtl::Vec3f(100, 300, 0), gmtl::Vec3f(255,0,0), gmtl::Vec2f(0.25f,1.0f) };
     Vertex v3{ gmtl::Vec3f(500, 400, 0), gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,1.0f) };
 
+
     // load texture
-    
-    Texture* texture = new Texture("res/test.jpg");
+    Texture texture = Texture("res/test.jpg");
+    texture.SetWrappingMode(WrappingMode::REPEAT);
 
-
-    renderer->FillTriangle(pWindow, v1, v2, v3, texture);
+    renderer->FillTriangle(pWindow, v1, v2, v3, &texture);
 
     while (!windowShouldClose) {
         // Process messages
@@ -31,7 +31,7 @@ int main()
             windowShouldClose = true;
         }
 
-        renderer->FillTriangle(pWindow, v1, v2, v3, texture);        
+        renderer->FillTriangle(pWindow, v1, v2, v3, &texture);        
     }
 
     delete pWindow;
