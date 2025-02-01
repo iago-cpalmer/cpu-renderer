@@ -1,33 +1,50 @@
-#pragma once
 #ifndef RENDERER_H
 #define RENDERER_H
 
-
-#include "Window.h"
-
 #include <gmtl/gmtl.h>
 #include <gmtl/Matrix.h>
+#include <cmath>
+
+#include "Window.h"
 #include "Vertex.h"
 #include "Texture.h"
-#include <cmath>
+
 class Renderer
 {
 public:
-	// Constants
-	const COLORREF COLOR_BLACK = RGB(0, 0, 255);
-	const COLORREF COLOR_RED = RGB(0, 255, 0);
-	const COLORREF WHITE = RGB(255, 0, 0);
+	// --------------------------------
+	// Constructor
+	// --------------------------------
 
-	// Functions
 	Renderer();
-	float lerp(float a, float b, float t);
-	void SortVertices(Vertex* v1, Vertex* v2, Vertex* v3);
-	void FillTriangle(Window* window, Vertex v1, Vertex v2, Vertex v3, Texture* texture);
-	void FillTriangleTopFlat(Window* window, Vertex v1, Vertex v2, Vertex v3, Texture* texture);
-	void FillTriangleBottomFlat(Window* window, Vertex v1, Vertex v2, Vertex v3, Texture* texture);
-	void DrawWireframe(Window* window, Vertex v1, Vertex v2, Vertex v3);
-	void DrawLine(Window* window, gmtl::Vec3f v1, gmtl::Vec3f v2, COLORREF color, float strokeSize);
-	void FillRectangle(Window* window, int xl, int yt, int xr, int yb, COLORREF color);
+
+	// --------------------------------
+	// Functions
+	// --------------------------------
+	
+	void DrawLine(Window* rp_window, gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, COLORREF r_color, float r_stroke_size);
+	
+	void DrawWireframe(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3);
+
+	void FillTriangle(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture);
+	void FillRectangle(Window* rp_window, const int r_xl, const int r_yt, const int r_xr, const int r_yb, COLORREF r_color);
+
+private:
+	// --------------------------------
+	// Constants
+	// --------------------------------
+	
+	static constexpr COLORREF COLOR_RED = RGB(255, 0, 0);
+
+	// --------------------------------
+	// Functions
+	// --------------------------------
+
+	void FillTriangleTopFlat(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture);
+	void FillTriangleBottomFlat(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture);
+
+	inline float Lerp(const float r_a, const float r_b, const float r_t);
+	void SortVertices(Vertex* rp_v1, Vertex* rp_v2, Vertex* rp_v3);
 };
 
 
