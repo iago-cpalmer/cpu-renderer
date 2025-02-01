@@ -1,10 +1,10 @@
 Features:
 - 2D Rasterizer (with colors and textures)
-  - Lines (DONE)
-  - Triangles (DONE)
-  - Rectangles (DONE)
+  - Lines ✔️
+  - Triangles ✔️
+  - Rectangles ✔️
   - Circles
-  - Pixel clipping (DONE).
+  - Pixel clipping ✔️
 - Geometry-phase clipping
 - Loading 3D Models
 - Orthographic Camera
