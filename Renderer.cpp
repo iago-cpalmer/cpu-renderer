@@ -189,9 +189,7 @@ void Renderer::FillTriangleTopFlat(Window* rp_window, Vertex r_v1, Vertex r_v2, 
 		int xf = floor(xff);
 		error += (xff - xf) + (xif - xi);
 		if (xi > xf) {
-			int aux = xf;
-			xf = xi;
-			xi = xf;
+			std::swap(xi, xf);
 		}
 		if (error >= 0.5f) {
 			xf += 1;
