@@ -242,7 +242,7 @@ void Renderer::FillTriangleBottomFlat(Window* window, Vertex r_v1, Vertex r_v2, 
 	// v2.y == v3.y
 	float m21 = (r_v2.Position[1] - r_v1.Position[1]) / (r_v2.Position[0] - r_v1.Position[0]);
 	float m31 = (r_v3.Position[1] - r_v1.Position[1]) / (r_v3.Position[0] - r_v1.Position[0]);
-
+	float error = 0;
 	for (int y = floor(r_v2.Position[1]); y > floor(r_v1.Position[1]); y--) {
 
 		float xif = (r_v2.Position[0] + (y - r_v2.Position[1]) / m21);
@@ -250,11 +250,14 @@ void Renderer::FillTriangleBottomFlat(Window* window, Vertex r_v1, Vertex r_v2, 
 
 		int xi = floor(xif);
 		int xf = floor(xff);
-
+		error += (xff - xf) + (xif - xi);
 		if (xi > xf) {
 			std::swap(xi, xf);
 		}
-
+		if (error >= 0.5f) {
+			xf += 1;
+			error -= 0.5f;
+		}
 		float yl = (float)(y - r_v1.Position[1]) / (r_v2.Position[1] - r_v1.Position[1]);
 
 		for (int i = xi; i < xf; i++) {
