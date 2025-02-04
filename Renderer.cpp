@@ -222,10 +222,6 @@ void Renderer::FillCircle(Window* rp_window, const gmtl::Vec2i r_center, const i
 	const int Xi = 0;
 	const int Yi = r_radius;
 
-	rp_window->SetPixelAt(Xi + r_center[0], Yi + r_center[1], r_color);
-	rp_window->SetPixelAt(Xi + r_center[0], -Yi + r_center[1], r_color);
-	rp_window->SetPixelAt(Yi + r_center[0], Xi + r_center[1], r_color);
-	rp_window->SetPixelAt(-Yi + r_center[0], Xi + r_center[1], r_color);
 	DrawLine(rp_window, gmtl::Vec3f(-Yi + r_center[0], r_center[1], 0), gmtl::Vec3f(Yi + r_center[0], r_center[1], 0), r_color, 1);
 
 	int x = Xi, y = Yi;
