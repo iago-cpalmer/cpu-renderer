@@ -149,6 +149,7 @@
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Rect.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="resource.h" />

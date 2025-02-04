@@ -12,7 +12,7 @@ public:
 	const wchar_t* CLASS_NAME = L"My own renderer";
 	const wchar_t* WINDOW_NAME = L"We rendering a cool empty triangle";
 	// Variables
-	int width = 640, height = 480;
+	int width = 640, height = 640;
 	// Functions
 	Window();
 	Window(const Window&) = delete;

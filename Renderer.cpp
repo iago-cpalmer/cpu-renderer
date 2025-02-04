@@ -95,6 +95,13 @@ void Renderer::DrawLine(Window* rp_window, gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, C
 		}
 		invertAxis = false;
 	}
+
+	// Clip line
+	if (!ClipLine(r_v1, r_v2))
+	{
+		return;
+	}
+
 	float y = 0;
 	float error = 0;
 	int axis = invertAxis ? 1 : 0;
@@ -254,6 +261,28 @@ void Renderer::FillCircle(Window* rp_window, const gmtl::Vec2i r_center, const i
 		// Octant 4 to 5
 		DrawLine(rp_window, gmtl::Vec3f(x + r_center[0], y + r_center[1], 0), gmtl::Vec3f(-x + r_center[0], y + r_center[1], 0), r_color, 1);
 	}
+}
+
+void Renderer::DrawRect(Window* rp_window, const Rect r_rect, COLORREF r_color)
+{
+	gmtl::Vec3f vTL = gmtl::Vec3f(r_rect.xi, r_rect.yi, 0);
+	gmtl::Vec3f vTR = gmtl::Vec3f(r_rect.xi + r_rect.width, r_rect.yi, 0);
+	gmtl::Vec3f vBL = gmtl::Vec3f(r_rect.xi, r_rect.yi + r_rect.height, 0);
+	gmtl::Vec3f vBR = gmtl::Vec3f(r_rect.xi + r_rect.width, r_rect.yi + r_rect.height, 0);
+	DrawLine(rp_window, vTL, vTR, r_color, 1);
+	DrawLine(rp_window, vTL, vBL, r_color, 1);
+	DrawLine(rp_window, vTR, vBR, r_color, 1);
+	DrawLine(rp_window, vBL, vBR, r_color, 1);
+}
+
+void Renderer::SetClipRect(const Rect r_rect)
+{
+	m_clip_rect = r_rect;
+}
+
+void Renderer::SetClippingEnabled(const bool r_clip_enabled)
+{
+	m_geometry_clipping_enabled = r_clip_enabled;
 }
 
 // ====================================
@@ -428,6 +457,150 @@ void Renderer::SortVertices(Vertex * rp_v1, Vertex * rp_v2, Vertex * rp_v3)
 		*rp_v2 = aux;
 	}
 	
+}
+
+
+bool Renderer::ClipLine(gmtl::Vec3f& r_v1, gmtl::Vec3f& r_v2)
+{
+	if (!m_geometry_clipping_enabled)
+	{
+		return true;
+	}
+	uint8_t v1Flags = GetClippingFlags(r_v1[0], r_v1[1]);
+	uint8_t v2Flags = GetClippingFlags(r_v2[0], r_v2[1]);
+
+	if (v1Flags == v2Flags && v1Flags == 0b1111)
+	{
+		// Trivially accepted
+		return true;
+	}
+
+	if (v1Flags == v2Flags && v1Flags != 0b1111 )
+	{
+		// Trivially rejected
+		return false;
+	}
+
+	// Check if v1 is inside
+	if (v1Flags != 0b1111)
+	{
+		switch (v1Flags)
+		{
+			case 0b0110:
+			{
+				int dy = r_v1[1] - (m_clip_rect.yi + m_clip_rect.height);
+
+				r_v1[0] = r_v1[0] + GetXAt(r_v1, r_v2, dy);
+				r_v1[1] = (m_clip_rect.yi + m_clip_rect.height);	
+				break;
+			}	
+			case 0b1010:
+			case 0b1110:
+			{
+				int dx = m_clip_rect.xi - r_v1[0];
+				int y = GetYAt(r_v1, r_v2, dx);
+
+				r_v1[0] = m_clip_rect.xi;
+				r_v1[1] = -y + r_v1[1];
+				break;
+			}
+
+			case 0b1011:
+			{
+				int dy = (m_clip_rect.yi) - r_v1[1];
+
+				r_v1[0] = r_v1[0] + GetXAt(r_v1, r_v2, dy);
+				r_v1[1] = m_clip_rect.yi;
+				break;
+			}
+			case 0b0111:
+			{
+				int dy = r_v1[1] - (m_clip_rect.yi + m_clip_rect.height);
+
+				r_v1[0] = r_v1[0] + GetXAt(r_v1, r_v2, dy);
+				r_v1[1] = m_clip_rect.yi + m_clip_rect.height;
+				break;
+			}
+
+		}
+	}
+	if (v2Flags != 0b1111)
+	{
+		switch (v2Flags)
+		{
+		case 0b1011:
+		{
+			int dy = m_clip_rect.yi - r_v2[1];
+
+			r_v2[0] = r_v2[0] - GetXAt(r_v2, r_v1, dy);
+			r_v2[1] = m_clip_rect.yi;
+			break;
+		}
+		case 0b0111:
+		{
+			int dy = r_v2[1] - (m_clip_rect.yi + m_clip_rect.height);
+
+			r_v2[0] = r_v2[0] - GetXAt(r_v2, r_v1, dy);
+			r_v2[1] = m_clip_rect.yi + m_clip_rect.height;
+			break;
+		}
+		case 0b1001:
+		case 0b0101:
+		case 0b1101:
+		{
+			int rectXf = m_clip_rect.xi + m_clip_rect.width;
+			int dx = r_v2[0] - rectXf;
+			int y = GetYAt(r_v2, r_v1, dx);
+			r_v2[0] = r_v2[0] - dx;
+			r_v2[1] = -y + r_v2[1];
+			break;
+		}
+		}
+	}
+	
+	return true;
+}
+
+float Renderer::GetYAt(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, const float r_x)
+{
+	float m = abs(r_v2[1] - r_v1[1]) / abs(r_v2[0] - r_v1[0]);
+	// y = mx + yi
+	float xi = min(r_v1[0], r_v2[0]);
+	return m * r_x;
+}
+
+float Renderer::GetXAt(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, const float r_y)
+{
+	float m = abs(r_v2[1] - r_v1[1]) / abs(r_v2[0] - r_v1[0]);
+	// y = mx + yi
+	// x = (y - yi) / m
+	return r_y / m;
+}
+
+uint8_t Renderer::GetClippingFlags(int x, int y)
+{
+	uint8_t flags = 0;
+	
+	if (x >= m_clip_rect.xi)
+	{
+		flags |= 0b1;
+	}
+	if (x <= (m_clip_rect.xi + m_clip_rect.width))
+	{
+		flags |= 0b10;
+	}
+
+	if (y >= (m_clip_rect.yi))
+	{
+		flags |= 0b100;
+	}
+
+	if (y <= (m_clip_rect.yi + m_clip_rect.height))
+	{
+		flags |= 0b1000;
+	}
+
+	return flags;
 }
 
 
