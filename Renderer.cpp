@@ -1,3 +1,4 @@
+#define POW2(x) x*x
 #include "Renderer.h"
 
 // ====================================
@@ -161,6 +162,107 @@ void Renderer::FillRectangle(Window* rp_window, const int r_xl, const int r_yt, 
 	}
 }
 
+// Using Mid-point algorithm
+void Renderer::DrawCircle(Window* rp_window, const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color)
+{
+	const int Xi = 0;
+	const int Yi = r_radius;
+
+	rp_window->SetPixelAt(Xi + r_center[0], Yi + r_center[1], r_color);
+	rp_window->SetPixelAt(Xi + r_center[0], -Yi + r_center[1], r_color);
+	rp_window->SetPixelAt(Yi + r_center[0], Xi + r_center[1], r_color);
+	rp_window->SetPixelAt(-Yi + r_center[0], Xi + r_center[1], r_color);
+	
+	int x = Xi, y = Yi;
+
+	float d = 1 - r_radius;
+	float dE = 3;
+	float dSE = -2 * r_radius + 5;
+
+	while (abs(y) > abs(x))
+	{
+		if (d < 0)
+		{
+			d += dE;
+			dE += 2;
+			dSE += 2;
+		}
+		else
+		{
+			d += dSE;
+			dE += 2;
+			dSE += 4;
+			y--;
+		}
+		x++;
+
+		int iy = y;
+		int ix = x;
+		// Draw octant 1
+		rp_window->SetPixelAt(ix + r_center[0], r_center[1] - iy, r_color);
+		// Draw octant 2
+		rp_window->SetPixelAt(iy + r_center[0], -ix + r_center[1], r_color);
+		// Draw octant 3
+		rp_window->SetPixelAt(iy + r_center[0], ix + r_center[1], r_color);
+		// Draw octant 4
+		rp_window->SetPixelAt(ix + r_center[0], iy + r_center[1], r_color);
+		// Draw octant 5
+		rp_window->SetPixelAt(-ix + r_center[0], iy + r_center[1], r_color);
+		// Draw octant 6
+		rp_window->SetPixelAt(-iy + r_center[0], -ix + r_center[1], r_color);
+		// Draw octant 7
+		rp_window->SetPixelAt(-iy + r_center[0], ix + r_center[1], r_color);
+		// Draw octant 8
+		rp_window->SetPixelAt(-ix + r_center[0], -iy + r_center[1], r_color);
+	}
+}
+
+void Renderer::FillCircle(Window* rp_window, const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color)
+{
+	const int Xi = 0;
+	const int Yi = r_radius;
+
+	rp_window->SetPixelAt(Xi + r_center[0], Yi + r_center[1], r_color);
+	rp_window->SetPixelAt(Xi + r_center[0], -Yi + r_center[1], r_color);
+	rp_window->SetPixelAt(Yi + r_center[0], Xi + r_center[1], r_color);
+	rp_window->SetPixelAt(-Yi + r_center[0], Xi + r_center[1], r_color);
+	DrawLine(rp_window, gmtl::Vec3f(-Yi + r_center[0], r_center[1], 0), gmtl::Vec3f(Yi + r_center[0], r_center[1], 0), r_color, 1);
+
+	int x = Xi, y = Yi;
+
+	float d = 1 - r_radius;
+	float dE = 3;
+	float dSE = -2 * r_radius + 5;
+
+	while (abs(y) > abs(x))
+	{
+		if (d < 0)
+		{
+			d += dE;
+			dE += 2;
+			dSE += 2;
+		}
+		else
+		{
+			d += dSE;
+			dE += 2;
+			dSE += 4;
+			y--;
+		}
+		x++;
+
+		int iy = y;
+		int ix = x;
+		// Octant 1 to 8
+		DrawLine(rp_window, gmtl::Vec3f(ix + r_center[0], r_center[1] - iy, 0), gmtl::Vec3f(-ix + r_center[0], -iy + r_center[1], 0), r_color, 1);
+		// Octant 3 to 6
+		DrawLine(rp_window, gmtl::Vec3f(iy + r_center[0], ix + r_center[1], 0), gmtl::Vec3f(-iy + r_center[0], ix + r_center[1], 0), r_color, 1);
+		// Octant 2 to 7
+		DrawLine(rp_window, gmtl::Vec3f(iy + r_center[0], -ix + r_center[1], 0), gmtl::Vec3f(-iy + r_center[0], -ix + r_center[1], 0), r_color, 1);
+		// Octant 4 to 5
+		DrawLine(rp_window, gmtl::Vec3f(ix + r_center[0], iy + r_center[1], 0), gmtl::Vec3f(-ix + r_center[0], iy + r_center[1], 0), r_color, 1);
+	}
+}
 
 // ====================================
 // Private

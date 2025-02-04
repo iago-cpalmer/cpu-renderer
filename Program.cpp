@@ -23,11 +23,13 @@ int main()
     Renderer renderer = Renderer();
     
     Vertex v1{ gmtl::Vec3f(300, 50, 0),     gmtl::Vec3f(0,0,255), gmtl::Vec2f(0.5f,0.0f) };
-    Vertex v2{ gmtl::Vec3f(500, 200, 0),    gmtl::Vec3f(255,0,0), gmtl::Vec2f(0.25f,1.0f) };
-    Vertex v3{ gmtl::Vec3f(100, 400, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,1.0f) };
+    Vertex v2{ gmtl::Vec3f(100, 400, 0),    gmtl::Vec3f(255,0,0), gmtl::Vec2f(0.25f,1.0f) };
+    Vertex v3{ gmtl::Vec3f(500, 400, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,3.0f) };
     
     Texture texture = Texture("res/test.jpg");
     texture.SetWrappingMode(WrappingMode::REPEAT);
+
+    renderer.FillCircle(pWindow, gmtl::Vec2i(200, 200), 100, RGB(255, 0, 0));
 
     // --------------------------------
     // Main Loop
@@ -40,7 +42,7 @@ int main()
             windowShouldClose = true;
         }
 
-        renderer.FillTriangle(pWindow, v1, v2, v3, &texture);        
+        //renderer.FillTriangle(pWindow, v1, v2, v3, &texture);        
     }
 
     // --------------------------------

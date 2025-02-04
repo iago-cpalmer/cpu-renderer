@@ -28,6 +28,8 @@ public:
 
 	void FillTriangle(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture);
 	void FillRectangle(Window* rp_window, const int r_xl, const int r_yt, const int r_xr, const int r_yb, COLORREF r_color);
+	void FillCircle(Window* rp_window, const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color);
+	void DrawCircle(Window* rp_window, const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color);
 
 private:
 	// --------------------------------
