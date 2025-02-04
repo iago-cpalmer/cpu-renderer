@@ -3,7 +3,7 @@ Features:
   - Lines ✔️
   - Triangles ✔️
   - Rectangles ✔️
-  - Circles
+  - Circles ✔️
   - Pixel clipping ✔️
 - Geometry-phase clipping
 - Loading 3D Models
