@@ -196,24 +196,22 @@ void Renderer::DrawCircle(Window* rp_window, const gmtl::Vec2i r_center, const i
 		}
 		x++;
 
-		int iy = y;
-		int ix = x;
 		// Draw octant 1
-		rp_window->SetPixelAt(ix + r_center[0], r_center[1] - iy, r_color);
+		rp_window->SetPixelAt(x + r_center[0], r_center[1] - y, r_color);
 		// Draw octant 2
-		rp_window->SetPixelAt(iy + r_center[0], -ix + r_center[1], r_color);
+		rp_window->SetPixelAt(y + r_center[0], -x + r_center[1], r_color);
 		// Draw octant 3
-		rp_window->SetPixelAt(iy + r_center[0], ix + r_center[1], r_color);
+		rp_window->SetPixelAt(y + r_center[0], x + r_center[1], r_color);
 		// Draw octant 4
-		rp_window->SetPixelAt(ix + r_center[0], iy + r_center[1], r_color);
+		rp_window->SetPixelAt(x + r_center[0], y + r_center[1], r_color);
 		// Draw octant 5
-		rp_window->SetPixelAt(-ix + r_center[0], iy + r_center[1], r_color);
+		rp_window->SetPixelAt(-x + r_center[0], y + r_center[1], r_color);
 		// Draw octant 6
-		rp_window->SetPixelAt(-iy + r_center[0], -ix + r_center[1], r_color);
+		rp_window->SetPixelAt(-y + r_center[0], -x + r_center[1], r_color);
 		// Draw octant 7
-		rp_window->SetPixelAt(-iy + r_center[0], ix + r_center[1], r_color);
+		rp_window->SetPixelAt(-y + r_center[0], x + r_center[1], r_color);
 		// Draw octant 8
-		rp_window->SetPixelAt(-ix + r_center[0], -iy + r_center[1], r_color);
+		rp_window->SetPixelAt(-x + r_center[0], -y + r_center[1], r_color);
 	}
 }
 
@@ -247,16 +245,14 @@ void Renderer::FillCircle(Window* rp_window, const gmtl::Vec2i r_center, const i
 		}
 		x++;
 
-		int iy = y;
-		int ix = x;
 		// Octant 1 to 8
-		DrawLine(rp_window, gmtl::Vec3f(ix + r_center[0], r_center[1] - iy, 0), gmtl::Vec3f(-ix + r_center[0], -iy + r_center[1], 0), r_color, 1);
+		DrawLine(rp_window, gmtl::Vec3f(x + r_center[0], r_center[1] - y, 0), gmtl::Vec3f(-x + r_center[0], -y + r_center[1], 0), r_color, 1);
 		// Octant 3 to 6
-		DrawLine(rp_window, gmtl::Vec3f(iy + r_center[0], ix + r_center[1], 0), gmtl::Vec3f(-iy + r_center[0], ix + r_center[1], 0), r_color, 1);
+		DrawLine(rp_window, gmtl::Vec3f(y + r_center[0], x + r_center[1], 0), gmtl::Vec3f(-y + r_center[0], x + r_center[1], 0), r_color, 1);
 		// Octant 2 to 7
-		DrawLine(rp_window, gmtl::Vec3f(iy + r_center[0], -ix + r_center[1], 0), gmtl::Vec3f(-iy + r_center[0], -ix + r_center[1], 0), r_color, 1);
+		DrawLine(rp_window, gmtl::Vec3f(y + r_center[0], -x + r_center[1], 0), gmtl::Vec3f(-y + r_center[0], -x + r_center[1], 0), r_color, 1);
 		// Octant 4 to 5
-		DrawLine(rp_window, gmtl::Vec3f(ix + r_center[0], iy + r_center[1], 0), gmtl::Vec3f(-ix + r_center[0], iy + r_center[1], 0), r_color, 1);
+		DrawLine(rp_window, gmtl::Vec3f(x + r_center[0], y + r_center[1], 0), gmtl::Vec3f(-x + r_center[0], y + r_center[1], 0), r_color, 1);
 	}
 }
 
