@@ -474,8 +474,12 @@ bool Renderer::ClipLine(gmtl::Vec3f& r_v1, gmtl::Vec3f& r_v2)
 		// Trivially accepted
 		return true;
 	}
+	int v1H = (v1Flags >> 2) & 0b11;
+	int v2H = (v2Flags >> 2) & 0b11;
+	int v2L = (v2Flags) & 0b11;
+	int v1L = (v1Flags) & 0b11;
 
-	if (v1Flags == v2Flags && v1Flags != 0b1111 )
+	if ((v1L==v2L && v1L != 0b11) || (v1H == v2H && v1H != 0b11))
 	{
 		// Trivially rejected
 		return false;
