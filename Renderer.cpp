@@ -9,6 +9,11 @@
 // Constructor
 // --------------------------------
 Renderer::Renderer()
+	: m_render_queue(INITIAL_RENDER_QUEUE_CAPACITY)
+	, m_clip_rect()
+	, mp_window(nullptr)
+	, m_mesh_count(0)
+	, m_geom_output(INITIAL_GEOM_VERTEX_CAPACITY, INITIAL_GEOM_INDEX_CAPACITY)
 {
 }
 
@@ -16,14 +21,44 @@ Renderer::Renderer()
 // Functions
 // --------------------------------
 
-void Renderer::FillTriangle(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture) {
+void Renderer::Render()
+{
+	// Geometry pass
+	GeometryPass();
+	// Rasterization
+	RasterizationPass();
+
+	// Finish rendering
+	m_mesh_count = 0;
+	m_geom_output.ClearBuffers();
+}
+
+void Renderer::RenderMesh(Mesh* rp_mesh)
+{
+	if (m_mesh_count < m_render_queue.size())
+	{
+		m_render_queue[m_mesh_count] = rp_mesh;
+	}
+	else
+	{
+		m_render_queue.push_back(rp_mesh);
+	}
+	m_mesh_count++;
+}
+
+void Renderer::SetWindow(Window* rp_window)
+{
+	mp_window = rp_window;
+}
+
+void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture) {
 	
 	SortVertices(&r_v1, &r_v2, &r_v3);	
 	if (r_v2.Position[1] == r_v3.Position[1]) {
-		FillTriangleBottomFlat(rp_window, r_v1, r_v2, r_v3, rp_texture);
+		FillTriangleBottomFlat( r_v1, r_v2, r_v3, rp_texture);
 	}
 	else if (r_v2.Position[1] == r_v1.Position[1]) {
-		FillTriangleTopFlat(rp_window, r_v1, r_v2, r_v3, rp_texture);
+		FillTriangleTopFlat(r_v1, r_v2, r_v3, rp_texture);
 	}
 	else {
 		// Split in 2
@@ -55,21 +90,21 @@ void Renderer::FillTriangle(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex 
 		
 		Vertex p{ intermediateCoord, gmtl::Vec3f(), gmtl::Vec2f(u, v) };
 
-		FillTriangleBottomFlat(rp_window, r_v1, r_v2, p, rp_texture);
-		FillTriangleTopFlat(rp_window, p, r_v2, r_v3, rp_texture);
+		FillTriangleBottomFlat(r_v1, r_v2, p, rp_texture);
+		FillTriangleTopFlat(p, r_v2, r_v3, rp_texture);
 	}
 	
 }
 
 
-void Renderer::DrawWireframe(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3)
+void Renderer::DrawWireframe(Vertex r_v1, Vertex r_v2, Vertex r_v3)
 {
-	DrawLine(rp_window, r_v1.Position, r_v2.Position, COLOR_RED, 1);
-	DrawLine(rp_window, r_v2.Position, r_v3.Position, COLOR_RED, 1);
-	DrawLine(rp_window, r_v3.Position, r_v1.Position, COLOR_RED, 1);
+	DrawLine(r_v1.Position, r_v2.Position, COLOR_RED, 1);
+	DrawLine(r_v2.Position, r_v3.Position, COLOR_RED, 1);
+	DrawLine(r_v3.Position, r_v1.Position, COLOR_RED, 1);
 }
 
-void Renderer::DrawLine(Window* rp_window, gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, COLORREF r_color, float r_stroke_size)
+void Renderer::DrawLine(gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, COLORREF r_color, float r_stroke_size)
 {
 	float m;
 	bool invertAxis;
@@ -110,21 +145,21 @@ void Renderer::DrawLine(Window* rp_window, gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, C
 		error = error + m - r_stroke_size;
 		if (invertAxis) {
 			if (r_stroke_size > 1) {
-				FillRectangle(rp_window, r_v1[0] + y - r_stroke_size, x - r_stroke_size, r_v1[0] + y + r_stroke_size, x + r_stroke_size, r_color);
+				FillRectangle(r_v1[0] + y - r_stroke_size, x - r_stroke_size, r_v1[0] + y + r_stroke_size, x + r_stroke_size, r_color);
 				if (error >= r_stroke_size) {
 					for (int i = 1; i <= floor(error); i+= r_stroke_size) {
-						FillRectangle(rp_window, r_v1[0] + y + i - r_stroke_size, x - r_stroke_size, r_v1[0] + y + i + r_stroke_size, x + r_stroke_size, r_color);
+						FillRectangle(r_v1[0] + y + i - r_stroke_size, x - r_stroke_size, r_v1[0] + y + i + r_stroke_size, x + r_stroke_size, r_color);
 					}
 					
 					error -= floor(error);
 				}
 			}
 			else {
-				rp_window->SetPixelAt(r_v1[0] + y, x, r_color);
+				mp_window->SetPixelAt(r_v1[0] + y, x, r_color);
 				
 				if (error >= r_stroke_size) {
 					for (int i = 1; i <= floor(error); i++) {
-						rp_window->SetPixelAt(r_v1[0] + y + i, x, r_color);
+						mp_window->SetPixelAt(r_v1[0] + y + i, x, r_color);
 					}
 					
 					error -= floor(error);
@@ -134,22 +169,22 @@ void Renderer::DrawLine(Window* rp_window, gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, C
 		}
 		else {
 			if (r_stroke_size > 1) {
-				FillRectangle(rp_window, x - r_stroke_size, r_v1[1] + y - r_stroke_size, x + r_stroke_size, r_v1[1] + y + r_stroke_size, r_color);
+				FillRectangle(x - r_stroke_size, r_v1[1] + y - r_stroke_size, x + r_stroke_size, r_v1[1] + y + r_stroke_size, r_color);
 				if (error >= r_stroke_size) {
 					for (int i = 1; i <= floor(error); i+= r_stroke_size) {
-						FillRectangle(rp_window, x - r_stroke_size, r_v1[1] + y + i - r_stroke_size, x + r_stroke_size, r_v1[1] + y +i + r_stroke_size, r_color);
+						FillRectangle(x - r_stroke_size, r_v1[1] + y + i - r_stroke_size, x + r_stroke_size, r_v1[1] + y +i + r_stroke_size, r_color);
 					}
 					
 					error -= floor(error);
 				}
 			}
 			else {
-				rp_window->SetPixelAt(x, floor(r_v1[1] + y), r_color);
+				mp_window->SetPixelAt(x, floor(r_v1[1] + y), r_color);
 
 				if (error >= r_stroke_size) {
 					
 					for (int i = 1; i <= floor(error); i+= r_stroke_size) {
-						rp_window->SetPixelAt(x, floor(r_v1[1] + y) + i, r_color);
+						mp_window->SetPixelAt(x, floor(r_v1[1] + y) + i, r_color);
 					}					
 					error -= floor(error);
 				}
@@ -160,25 +195,25 @@ void Renderer::DrawLine(Window* rp_window, gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, C
 	}
 }
 
-void Renderer::FillRectangle(Window* rp_window, const int r_xl, const int r_yt, const int r_xr, const int r_yb, COLORREF r_color)
+void Renderer::FillRectangle(const int r_xl, const int r_yt, const int r_xr, const int r_yb, COLORREF r_color)
 {
 	for (int x = r_xl; x < r_xr; x++) {
 		for (int y = r_yt; y < r_yb; y++) {
-			rp_window->SetPixelAt(x, y, r_color);
+			mp_window->SetPixelAt(x, y, r_color);
 		}
 	}
 }
 
 // Using Mid-point algorithm
-void Renderer::DrawCircle(Window* rp_window, const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color)
+void Renderer::DrawCircle(const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color)
 {
 	const int Xi = 0;
 	const int Yi = r_radius;
 
-	rp_window->SetPixelAt(Xi + r_center[0], Yi + r_center[1], r_color);
-	rp_window->SetPixelAt(Xi + r_center[0], -Yi + r_center[1], r_color);
-	rp_window->SetPixelAt(Yi + r_center[0], Xi + r_center[1], r_color);
-	rp_window->SetPixelAt(-Yi + r_center[0], Xi + r_center[1], r_color);
+	mp_window->SetPixelAt(Xi + r_center[0], Yi + r_center[1], r_color);
+	mp_window->SetPixelAt(Xi + r_center[0], -Yi + r_center[1], r_color);
+	mp_window->SetPixelAt(Yi + r_center[0], Xi + r_center[1], r_color);
+	mp_window->SetPixelAt(-Yi + r_center[0], Xi + r_center[1], r_color);
 	
 	int x = Xi, y = Yi;
 
@@ -204,30 +239,30 @@ void Renderer::DrawCircle(Window* rp_window, const gmtl::Vec2i r_center, const i
 		x++;
 
 		// Draw octant 1
-		rp_window->SetPixelAt(x + r_center[0], r_center[1] - y, r_color);
+		mp_window->SetPixelAt(x + r_center[0], r_center[1] - y, r_color);
 		// Draw octant 2
-		rp_window->SetPixelAt(y + r_center[0], -x + r_center[1], r_color);
+		mp_window->SetPixelAt(y + r_center[0], -x + r_center[1], r_color);
 		// Draw octant 3
-		rp_window->SetPixelAt(y + r_center[0], x + r_center[1], r_color);
+		mp_window->SetPixelAt(y + r_center[0], x + r_center[1], r_color);
 		// Draw octant 4
-		rp_window->SetPixelAt(x + r_center[0], y + r_center[1], r_color);
+		mp_window->SetPixelAt(x + r_center[0], y + r_center[1], r_color);
 		// Draw octant 5
-		rp_window->SetPixelAt(-x + r_center[0], y + r_center[1], r_color);
+		mp_window->SetPixelAt(-x + r_center[0], y + r_center[1], r_color);
 		// Draw octant 6
-		rp_window->SetPixelAt(-y + r_center[0], -x + r_center[1], r_color);
+		mp_window->SetPixelAt(-y + r_center[0], -x + r_center[1], r_color);
 		// Draw octant 7
-		rp_window->SetPixelAt(-y + r_center[0], x + r_center[1], r_color);
+		mp_window->SetPixelAt(-y + r_center[0], x + r_center[1], r_color);
 		// Draw octant 8
-		rp_window->SetPixelAt(-x + r_center[0], -y + r_center[1], r_color);
+		mp_window->SetPixelAt(-x + r_center[0], -y + r_center[1], r_color);
 	}
 }
 
-void Renderer::FillCircle(Window* rp_window, const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color)
+void Renderer::FillCircle(const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color)
 {
 	const int Xi = 0;
 	const int Yi = r_radius;
 
-	DrawLine(rp_window, gmtl::Vec3f(-Yi + r_center[0], r_center[1], 0), gmtl::Vec3f(Yi + r_center[0], r_center[1], 0), r_color, 1);
+	DrawLine(gmtl::Vec3f(-Yi + r_center[0], r_center[1], 0), gmtl::Vec3f(Yi + r_center[0], r_center[1], 0), r_color, 1);
 
 	int x = Xi, y = Yi;
 
@@ -253,26 +288,26 @@ void Renderer::FillCircle(Window* rp_window, const gmtl::Vec2i r_center, const i
 		x++;
 
 		// Octant 1 to 8
-		DrawLine(rp_window, gmtl::Vec3f(x + r_center[0], r_center[1] - y, 0), gmtl::Vec3f(-x + r_center[0], -y + r_center[1], 0), r_color, 1);
+		DrawLine(gmtl::Vec3f(x + r_center[0], r_center[1] - y, 0), gmtl::Vec3f(-x + r_center[0], -y + r_center[1], 0), r_color, 1);
 		// Octant 3 to 6
-		DrawLine(rp_window, gmtl::Vec3f(y + r_center[0], x + r_center[1], 0), gmtl::Vec3f(-y + r_center[0], x + r_center[1], 0), r_color, 1);
+		DrawLine(gmtl::Vec3f(y + r_center[0], x + r_center[1], 0), gmtl::Vec3f(-y + r_center[0], x + r_center[1], 0), r_color, 1);
 		// Octant 2 to 7
-		DrawLine(rp_window, gmtl::Vec3f(y + r_center[0], -x + r_center[1], 0), gmtl::Vec3f(-y + r_center[0], -x + r_center[1], 0), r_color, 1);
+		DrawLine(gmtl::Vec3f(y + r_center[0], -x + r_center[1], 0), gmtl::Vec3f(-y + r_center[0], -x + r_center[1], 0), r_color, 1);
 		// Octant 4 to 5
-		DrawLine(rp_window, gmtl::Vec3f(x + r_center[0], y + r_center[1], 0), gmtl::Vec3f(-x + r_center[0], y + r_center[1], 0), r_color, 1);
+		DrawLine(gmtl::Vec3f(x + r_center[0], y + r_center[1], 0), gmtl::Vec3f(-x + r_center[0], y + r_center[1], 0), r_color, 1);
 	}
 }
 
-void Renderer::DrawRect(Window* rp_window, const Rect r_rect, COLORREF r_color)
+void Renderer::DrawRect(const Rect r_rect, COLORREF r_color)
 {
 	gmtl::Vec3f vTL = gmtl::Vec3f(r_rect.xi, r_rect.yi, 0);
 	gmtl::Vec3f vTR = gmtl::Vec3f(r_rect.xi + r_rect.width, r_rect.yi, 0);
 	gmtl::Vec3f vBL = gmtl::Vec3f(r_rect.xi, r_rect.yi + r_rect.height, 0);
 	gmtl::Vec3f vBR = gmtl::Vec3f(r_rect.xi + r_rect.width, r_rect.yi + r_rect.height, 0);
-	DrawLine(rp_window, vTL, vTR, r_color, 1);
-	DrawLine(rp_window, vTL, vBL, r_color, 1);
-	DrawLine(rp_window, vTR, vBR, r_color, 1);
-	DrawLine(rp_window, vBL, vBR, r_color, 1);
+	DrawLine(vTL, vTR, r_color, 1);
+	DrawLine(vTL, vBL, r_color, 1);
+	DrawLine(vTR, vBR, r_color, 1);
+	DrawLine(vBL, vBR, r_color, 1);
 }
 
 void Renderer::SetClipRect(const Rect r_rect)
@@ -297,7 +332,47 @@ inline float Renderer::Lerp(const float r_a, const float r_b, const float r_t) {
 	return ((r_b - r_a) * r_t) + r_a;
 }
 
-void Renderer::FillTriangleTopFlat(Window* rp_window, Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture)
+void Renderer::GeometryPass()
+{
+	int id1 = 0, id2 = 0, id3 = 0;
+	Mesh* pMesh;
+	for (std::size_t m = 0; m < m_mesh_count; m++)
+	{
+		pMesh = m_render_queue[m];
+
+		for (std::size_t i = 0; i < pMesh->GetIndexCount(); i += 3)
+		{
+			id1 = pMesh->GetIndexAt(i);
+			id2 = pMesh->GetIndexAt(i + 1);
+			id3 = pMesh->GetIndexAt(i + 2);
+
+			// Transform vertices
+
+			// Clip triangle, adding vertices to vertex output buffer. RasterizationPass will use it
+
+			// Add vertices to vertex output buffer
+			int initialId = m_geom_output.GetVertexCount();
+			m_geom_output.AddVertex(pMesh->GetVertexAt(id1));
+			m_geom_output.AddVertex(pMesh->GetVertexAt(id2));
+			m_geom_output.AddVertex(pMesh->GetVertexAt(id3));
+
+			m_geom_output.AddIndex(initialId++);
+			m_geom_output.AddIndex(initialId++);
+			m_geom_output.AddIndex(initialId);
+		}
+	}
+	
+}
+
+void Renderer::RasterizationPass()
+{
+	for (std::size_t i = 0; i < m_geom_output.GetIndexCount(); i += 3)
+	{
+		FillTriangle(m_geom_output.GetVertexAt(i), m_geom_output.GetVertexAt(i + 1), m_geom_output.GetVertexAt(i + 2), nullptr); // TODO: Pass texture
+	}
+}
+
+void Renderer::FillTriangleTopFlat(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture)
 {
 	// v2.y == v1.y
 	float m23 = (r_v2.Position[1] - r_v3.Position[1]) / abs(r_v2.Position[0] - r_v3.Position[0]);
@@ -355,12 +430,12 @@ void Renderer::FillTriangleTopFlat(Window* rp_window, Vertex r_v1, Vertex r_v2, 
 			{
 				color = rp_texture->GetColorAtUV(Lerp(uLeft, uRight, xl), Lerp(vLeft, vRight, xl));
 			}
-			rp_window->SetPixelAt(i, y, color);
+			mp_window->SetPixelAt(i, y, color);
 		}
 	}
 }
 
-void Renderer::FillTriangleBottomFlat(Window* window, Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture)
+void Renderer::FillTriangleBottomFlat(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture)
 {
 	// v2.y == v3.y
 	float m21 = (r_v2.Position[1] - r_v1.Position[1]) / (r_v2.Position[0] - r_v1.Position[0]);
@@ -420,7 +495,7 @@ void Renderer::FillTriangleBottomFlat(Window* window, Vertex r_v1, Vertex r_v2, 
 			{
 				color = rp_texture->GetColorAtUV(Lerp(uLeft, uRight, xl), Lerp(vLeft, vRight, xl));
 			}
-			window->SetPixelAt(i, y, color);
+			mp_window->SetPixelAt(i, y, color);
 		}
 	}
 }
@@ -563,6 +638,17 @@ bool Renderer::ClipLine(gmtl::Vec3f& r_v1, gmtl::Vec3f& r_v2)
 	}
 	
 	return true;
+}
+
+bool Renderer::ClipTriangle(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, const gmtl::Vec3f& r_v3)
+{
+	if (!m_geometry_clipping_enabled)
+	{
+		return true;
+	}
+	uint8_t v1Flags = GetClippingFlags(r_v1[0], r_v1[1]);
+	uint8_t v2Flags = GetClippingFlags(r_v2[0], r_v2[1]);
+	uint8_t v3Flags = GetClippingFlags(r_v2[0], r_v2[1]);
 }
 
 float Renderer::GetYAt(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, const float r_x)
