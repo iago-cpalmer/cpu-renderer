@@ -44,31 +44,3 @@ void Mesh::AddIndex(const int r_index)
 	}
 	m_index_count++;
 }
-
-void Mesh::ClearBuffers()
-{
-	m_vertex_count = 0;
-	m_index_count = 0;
-}
-
-int Mesh::GetVertexCount()
-{
-	return m_vertex_count;
-}
-
-int Mesh::GetIndexCount()
-{
-	return m_index_count;
-}
-
-inline Vertex& Mesh::GetVertexAt(int r_index)
-{
-	assert(r_index < m_vertex_count);
-	return m_vbo[r_index];
-}
-
-inline int& Mesh::GetIndexAt(int r_index)
-{
-	assert(r_index < m_index_count);
-	return m_ibo[r_index];
-}

@@ -29,7 +29,7 @@ public:
 
 	void RenderMesh(Mesh* rp_mesh);
 
-	void SetWindow(Window* rp_window);
+	void SetGraphicBuffers(GraphicBuffers* rp_graphic_buffers);
 	
 	void DrawLine(gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, COLORREF r_color, float r_stroke_size);
 	
@@ -60,7 +60,7 @@ private:
 	// Variables
 	// --------------------------------
 	
-	Window* mp_window;
+	GraphicBuffers* mp_graphic_buffers;
 
 	Rect m_clip_rect;
 
@@ -91,6 +91,11 @@ private:
 
 	float GetYAt(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, const float r_x);
 	float GetXAt(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, const float r_y);
+
+	inline void SetPixelAt(int r_x, int r_y, COLORREF r_color)
+	{
+		mp_graphic_buffers->SetPixel(r_x, r_y, r_color);
+	}
 };
 
 

@@ -14,8 +14,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-Window::Window()
+Window::Window(int r_width, int r_height)
 	: m_hInstance(GetModuleHandle(nullptr))
+	, m_width(r_width)
+	, m_height(r_height)
+	, mp_graphic_buffers(nullptr)
 {
 	WNDCLASS wndClass = {};
 	wndClass.lpszClassName = CLASS_NAME;
@@ -31,8 +34,8 @@ Window::Window()
 	RECT rect;
 	rect.left = 250;
 	rect.top = 250;
-	rect.right = rect.left + width;
-	rect.bottom = rect.top + height;
+	rect.right = rect.left + m_width;
+	rect.bottom = rect.top + m_height;
 
 	AdjustWindowRect(&rect, style, false);
 
@@ -43,15 +46,15 @@ Window::Window()
 		style,
 		rect.left,
 		rect.top,
-		width,
-		height,
+		m_width,
+		m_height,
 		NULL,
 		NULL,
 		m_hInstance,
 		NULL
 	);
 
-	m_HDC = GetDC(m_hWnd);
+	//m_HDC = GetDC(m_hWnd);
 
 	ShowWindow(m_hWnd, SW_SHOW);
 }
@@ -66,9 +69,13 @@ bool Window::ProcessMessages()
 	MSG msg = {};
 
 	while (PeekMessage(&msg, nullptr, 0u, 0u, PM_REMOVE)) {
-		
-		if (msg.message == WM_QUIT) {
-			return false;
+
+		switch (msg.message)
+		{
+			case WM_QUIT:
+				{
+					return false;
+				}
 		}
 
 		TranslateMessage(&msg);
@@ -78,16 +85,21 @@ bool Window::ProcessMessages()
 	return true;
 }
 
-void Window::SetPixelAt(int x, int y, COLORREF color)
+void Window::FinishRendering()
 {
-	if (InsideWindowBounds(x,y)) {
-		SetPixel(m_HDC, x, y, color);
-	}
-	
+	HDC hdc = GetDC(m_hWnd);
+	HDC hdcBmp = CreateCompatibleDC(hdc);
+	HGDIOBJ oldBmp = SelectObject(hdcBmp, mp_graphic_buffers->GetFrontBuffer());
+
+	BitBlt(hdc, 0, 0, mp_graphic_buffers->GetWidth(), mp_graphic_buffers->GetHeight(), hdcBmp, 0, 0, SRCCOPY);
+
+	SelectObject(hdc, oldBmp);
+	DeleteDC(hdcBmp);
+	ReleaseDC(m_hWnd, hdc);
 }
 
-bool Window::InsideWindowBounds(int x, int y) {
-	return (x >= 0 && x < width && y >= 0 && y < height);
+void Window::SetGraphicBuffers(GraphicBuffers* rp_graphic_buffer)
+{
+	mp_graphic_buffers = rp_graphic_buffer;
 }
-
 

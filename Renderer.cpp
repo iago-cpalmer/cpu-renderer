@@ -11,7 +11,7 @@
 Renderer::Renderer()
 	: m_render_queue(INITIAL_RENDER_QUEUE_CAPACITY)
 	, m_clip_rect()
-	, mp_window(nullptr)
+	, mp_graphic_buffers(nullptr)
 	, m_mesh_count(0)
 	, m_geom_output(INITIAL_GEOM_VERTEX_CAPACITY, INITIAL_GEOM_INDEX_CAPACITY)
 {
@@ -46,9 +46,9 @@ void Renderer::RenderMesh(Mesh* rp_mesh)
 	m_mesh_count++;
 }
 
-void Renderer::SetWindow(Window* rp_window)
+void Renderer::SetGraphicBuffers(GraphicBuffers* rp_graphic_buffers)
 {
-	mp_window = rp_window;
+	mp_graphic_buffers = rp_graphic_buffers;
 }
 
 void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture) {
@@ -155,11 +155,11 @@ void Renderer::DrawLine(gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, COLORREF r_color, fl
 				}
 			}
 			else {
-				mp_window->SetPixelAt(r_v1[0] + y, x, r_color);
+				SetPixelAt(r_v1[0] + y, x, r_color);
 				
 				if (error >= r_stroke_size) {
 					for (int i = 1; i <= floor(error); i++) {
-						mp_window->SetPixelAt(r_v1[0] + y + i, x, r_color);
+						SetPixelAt(r_v1[0] + y + i, x, r_color);
 					}
 					
 					error -= floor(error);
@@ -179,12 +179,12 @@ void Renderer::DrawLine(gmtl::Vec3f r_v1, gmtl::Vec3f r_v2, COLORREF r_color, fl
 				}
 			}
 			else {
-				mp_window->SetPixelAt(x, floor(r_v1[1] + y), r_color);
+				SetPixelAt(x, floor(r_v1[1] + y), r_color);
 
 				if (error >= r_stroke_size) {
 					
 					for (int i = 1; i <= floor(error); i+= r_stroke_size) {
-						mp_window->SetPixelAt(x, floor(r_v1[1] + y) + i, r_color);
+						SetPixelAt(x, floor(r_v1[1] + y) + i, r_color);
 					}					
 					error -= floor(error);
 				}
@@ -199,7 +199,7 @@ void Renderer::FillRectangle(const int r_xl, const int r_yt, const int r_xr, con
 {
 	for (int x = r_xl; x < r_xr; x++) {
 		for (int y = r_yt; y < r_yb; y++) {
-			mp_window->SetPixelAt(x, y, r_color);
+			SetPixelAt(x, y, r_color);
 		}
 	}
 }
@@ -210,10 +210,10 @@ void Renderer::DrawCircle(const gmtl::Vec2i r_center, const int r_radius, COLORR
 	const int Xi = 0;
 	const int Yi = r_radius;
 
-	mp_window->SetPixelAt(Xi + r_center[0], Yi + r_center[1], r_color);
-	mp_window->SetPixelAt(Xi + r_center[0], -Yi + r_center[1], r_color);
-	mp_window->SetPixelAt(Yi + r_center[0], Xi + r_center[1], r_color);
-	mp_window->SetPixelAt(-Yi + r_center[0], Xi + r_center[1], r_color);
+	SetPixelAt(Xi + r_center[0], Yi + r_center[1], r_color);
+	SetPixelAt(Xi + r_center[0], -Yi + r_center[1], r_color);
+	SetPixelAt(Yi + r_center[0], Xi + r_center[1], r_color);
+	SetPixelAt(-Yi + r_center[0], Xi + r_center[1], r_color);
 	
 	int x = Xi, y = Yi;
 
@@ -239,21 +239,21 @@ void Renderer::DrawCircle(const gmtl::Vec2i r_center, const int r_radius, COLORR
 		x++;
 
 		// Draw octant 1
-		mp_window->SetPixelAt(x + r_center[0], r_center[1] - y, r_color);
+		SetPixelAt(x + r_center[0], r_center[1] - y, r_color);
 		// Draw octant 2
-		mp_window->SetPixelAt(y + r_center[0], -x + r_center[1], r_color);
+		SetPixelAt(y + r_center[0], -x + r_center[1], r_color);
 		// Draw octant 3
-		mp_window->SetPixelAt(y + r_center[0], x + r_center[1], r_color);
+		SetPixelAt(y + r_center[0], x + r_center[1], r_color);
 		// Draw octant 4
-		mp_window->SetPixelAt(x + r_center[0], y + r_center[1], r_color);
+		SetPixelAt(x + r_center[0], y + r_center[1], r_color);
 		// Draw octant 5
-		mp_window->SetPixelAt(-x + r_center[0], y + r_center[1], r_color);
+		SetPixelAt(-x + r_center[0], y + r_center[1], r_color);
 		// Draw octant 6
-		mp_window->SetPixelAt(-y + r_center[0], -x + r_center[1], r_color);
+		SetPixelAt(-y + r_center[0], -x + r_center[1], r_color);
 		// Draw octant 7
-		mp_window->SetPixelAt(-y + r_center[0], x + r_center[1], r_color);
+		SetPixelAt(-y + r_center[0], x + r_center[1], r_color);
 		// Draw octant 8
-		mp_window->SetPixelAt(-x + r_center[0], -y + r_center[1], r_color);
+		SetPixelAt(-x + r_center[0], -y + r_center[1], r_color);
 	}
 }
 
@@ -334,31 +334,24 @@ inline float Renderer::Lerp(const float r_a, const float r_b, const float r_t) {
 
 void Renderer::GeometryPass()
 {
-	int id1 = 0, id2 = 0, id3 = 0;
+	int id1 = 0;
 	Mesh* pMesh;
 	for (std::size_t m = 0; m < m_mesh_count; m++)
 	{
 		pMesh = m_render_queue[m];
 
-		for (std::size_t i = 0; i < pMesh->GetIndexCount(); i += 3)
+		for (std::size_t i = 0; i < pMesh->GetIndexCount(); i ++)
 		{
 			id1 = pMesh->GetIndexAt(i);
-			id2 = pMesh->GetIndexAt(i + 1);
-			id3 = pMesh->GetIndexAt(i + 2);
 
 			// Transform vertices
-
+			pMesh->GetVertexAt(id1).Position = pMesh->GetVertexAt(id1).Position + gmtl::Vec3f(5, 0, 0);
 			// Clip triangle, adding vertices to vertex output buffer. RasterizationPass will use it
 
 			// Add vertices to vertex output buffer
 			int initialId = m_geom_output.GetVertexCount();
 			m_geom_output.AddVertex(pMesh->GetVertexAt(id1));
-			m_geom_output.AddVertex(pMesh->GetVertexAt(id2));
-			m_geom_output.AddVertex(pMesh->GetVertexAt(id3));
-
 			m_geom_output.AddIndex(initialId++);
-			m_geom_output.AddIndex(initialId++);
-			m_geom_output.AddIndex(initialId);
 		}
 	}
 	
@@ -430,7 +423,7 @@ void Renderer::FillTriangleTopFlat(Vertex r_v1, Vertex r_v2, Vertex r_v3, Textur
 			{
 				color = rp_texture->GetColorAtUV(Lerp(uLeft, uRight, xl), Lerp(vLeft, vRight, xl));
 			}
-			mp_window->SetPixelAt(i, y, color);
+			SetPixelAt(i, y, color);
 		}
 	}
 }
@@ -495,7 +488,7 @@ void Renderer::FillTriangleBottomFlat(Vertex r_v1, Vertex r_v2, Vertex r_v3, Tex
 			{
 				color = rp_texture->GetColorAtUV(Lerp(uLeft, uRight, xl), Lerp(vLeft, vRight, xl));
 			}
-			mp_window->SetPixelAt(i, y, color);
+			SetPixelAt(i, y, color);
 		}
 	}
 }
@@ -649,6 +642,8 @@ bool Renderer::ClipTriangle(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, co
 	uint8_t v1Flags = GetClippingFlags(r_v1[0], r_v1[1]);
 	uint8_t v2Flags = GetClippingFlags(r_v2[0], r_v2[1]);
 	uint8_t v3Flags = GetClippingFlags(r_v2[0], r_v2[1]);
+
+	return true;
 }
 
 float Renderer::GetYAt(const gmtl::Vec3f& r_v1, const gmtl::Vec3f& r_v2, const float r_x)
