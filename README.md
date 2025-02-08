@@ -5,6 +5,8 @@ Features:
   - Rectangles ✔️
   - Circles ✔️
   - Pixel clipping ✔️
+- Basic Rendering Pipeline ✔️
+- Extern vertex & fragment shader
 - Geometry-phase clipping
 - Loading 3D Models
 - Orthographic Camera
@@ -12,3 +14,4 @@ Features:
 - Directional light
 - Point Light
 - Moving camera in 3D-Scene
+- Post-processing
