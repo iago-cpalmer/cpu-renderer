@@ -361,8 +361,8 @@ void Renderer::GeometryPass()
 			// Transform vertices
 			Vertex v = pMesh->GetVertexAt(id1);
 			
-			int rx = rand() % 10;
-			int ry = rand() % 10;
+			int rx = rand() % 100;
+			int ry = rand() % 100;
 			v.Position = v.Position + gmtl::Vec3f(rx, ry, 0);
 			v.UV = pMesh->GetVertexAt(id1).UV;
 			v.Color = pMesh->GetVertexAt(id1).Color;

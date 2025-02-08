@@ -1,6 +1,8 @@
 // CPURenderer.cpp 
 #include <iostream>
 
+#include <chrono>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -71,15 +73,30 @@ int main()
     // Main Loop
     // --------------------------------
 
+    auto prevTime = std::chrono::high_resolution_clock::now();
+    double deltaTime = 0.0;
+    int frameCounter = 0;
+
     bool windowShouldClose = false;
     while (!windowShouldClose) {
+
+        // FPS Handling
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        deltaTime = std::chrono::duration<double>(currentTime - prevTime).count(); // Convert to seconds
+        prevTime = currentTime;
+        frameCounter = (frameCounter + 1) % 10;
+        if (frameCounter == 0)
+        {
+            printf("FPS: %f \n", (1.0f / deltaTime));
+        }
+
         // Process messages
         if (!pWindow->ProcessMessages()) {
             windowShouldClose = true;
         }
 
         // Update
-
+        
 
         // Render
         graphicBuffers.Clear(RGB(255, 0, 255));
