@@ -54,7 +54,7 @@ Window::Window(int r_width, int r_height)
 		NULL
 	);
 
-	//m_HDC = GetDC(m_hWnd);
+	m_HDC = GetDC(m_hWnd);
 
 	ShowWindow(m_hWnd, SW_SHOW);
 }

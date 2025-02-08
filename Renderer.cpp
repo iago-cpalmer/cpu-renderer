@@ -62,7 +62,7 @@ void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_t
 	}
 	else {
 		// Split in 2
-		float m = (r_v3.Position[1] - r_v1.Position[1]) / abs(r_v3.Position[0]-r_v1.Position[0]);
+		float m = abs(r_v3.Position[1] - r_v1.Position[1]) / abs(r_v3.Position[0]-r_v1.Position[0]);
 		float x = 0;
 		if (r_v3.Position[0] > r_v1.Position[0]) {
 			x = r_v1.Position[0] + floor((r_v2.Position[1] - r_v1.Position[1]) / m);
@@ -87,11 +87,24 @@ void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_t
 		// Calculate intermediate uv coordinates
 		float u = Lerp(r_v1.UV[0], r_v3.UV[0], xl);
  		float v = Lerp(r_v1.UV[1], r_v3.UV[1], yl);
-		
-		Vertex p{ intermediateCoord, gmtl::Vec3f(), gmtl::Vec2f(u, v) };
 
-		FillTriangleBottomFlat(r_v1, r_v2, p, rp_texture);
-		FillTriangleTopFlat(p, r_v2, r_v3, rp_texture);
+		gmtl::Vec3f color = gmtl::Vec3f(
+			Lerp(r_v1.Color[0], r_v3.Color[0], yl),
+			Lerp(r_v1.Color[1], r_v3.Color[1], yl),
+			Lerp(r_v1.Color[2], r_v3.Color[2], yl)
+		);
+		
+		Vertex p{ intermediateCoord, color, gmtl::Vec2f(u, v) };
+
+		if (r_v3.Position[0] > r_v1.Position[0]) {
+			FillTriangleBottomFlat(r_v1, r_v2, p, rp_texture);
+			FillTriangleTopFlat(p, r_v2, r_v3, rp_texture);
+		}
+		else {
+			FillTriangleBottomFlat(r_v1, p, r_v2, rp_texture);
+			FillTriangleTopFlat(r_v2, p, r_v3, rp_texture);
+		}
+		
 	}
 	
 }
@@ -336,6 +349,7 @@ void Renderer::GeometryPass()
 {
 	int id1 = 0;
 	Mesh* pMesh;
+	
 	for (std::size_t m = 0; m < m_mesh_count; m++)
 	{
 		pMesh = m_render_queue[m];
@@ -345,12 +359,18 @@ void Renderer::GeometryPass()
 			id1 = pMesh->GetIndexAt(i);
 
 			// Transform vertices
-			pMesh->GetVertexAt(id1).Position = pMesh->GetVertexAt(id1).Position + gmtl::Vec3f(5, 0, 0);
+			Vertex v = pMesh->GetVertexAt(id1);
+			
+			int rx = rand() % 10;
+			int ry = rand() % 10;
+			v.Position = v.Position + gmtl::Vec3f(rx, ry, 0);
+			v.UV = pMesh->GetVertexAt(id1).UV;
+			v.Color = pMesh->GetVertexAt(id1).Color;
 			// Clip triangle, adding vertices to vertex output buffer. RasterizationPass will use it
 
 			// Add vertices to vertex output buffer
 			int initialId = m_geom_output.GetVertexCount();
-			m_geom_output.AddVertex(pMesh->GetVertexAt(id1));
+			m_geom_output.AddVertex(v);
 			m_geom_output.AddIndex(initialId++);
 		}
 	}
