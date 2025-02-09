@@ -9,6 +9,7 @@
 #include "Window.h"
 #include "Texture.h"
 #include "Renderer.h"
+#include "Material.h"
 
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 800
@@ -25,6 +26,8 @@ int main()
 
     Renderer renderer = Renderer();
     renderer.SetGraphicBuffers(&graphicBuffers);
+    const Rect rect = { 200, 200, 300, 300 };
+    renderer.SetClipRect(rect);
 
     // --------------------------------
     // Other Initializations
@@ -32,28 +35,27 @@ int main()
 
     Vertex v1{ gmtl::Vec3f(300, 50, 0),     gmtl::Vec3f(0,0,255), gmtl::Vec2f(0.5f,0.0f) };
     Vertex v2{ gmtl::Vec3f(100, 400, 0),    gmtl::Vec3f(255,0,0), gmtl::Vec2f(0.25f,1.0f) };
-    Vertex v3{ gmtl::Vec3f(600, 400, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,3.0f) };
+    Vertex v3{ gmtl::Vec3f(600, 400, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,1.0f) };
 
-    Vertex v4{ gmtl::Vec3f(100, 400, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,3.0f) };
-    Vertex v5{ gmtl::Vec3f(300, 300, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,3.0f) };
+    Vertex v4{ gmtl::Vec3f(100, 300, 0),    gmtl::Vec3f(0, 255, 0), gmtl::Vec2f(0.75f,3.0f) };
+    Vertex v5{ gmtl::Vec3f(300, 310, 0),    gmtl::Vec3f(255, 0, 0), gmtl::Vec2f(0.75f,3.0f) };
 
-    Vertex v6{ gmtl::Vec3f(600, 300, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,3.0f) };
-    Vertex v7{ gmtl::Vec3f(100, 600, 0),    gmtl::Vec3f(0,255,0), gmtl::Vec2f(0.75f,3.0f) };
+    Vertex v6{ gmtl::Vec3f(600, 200, 0),    gmtl::Vec3f(0, 0, 255), gmtl::Vec2f(0.75f,3.0f) };
     
+    // Textures set-up
     Texture texture = Texture("res/test.jpg");
     texture.SetWrappingMode(WrappingMode::REPEAT);
+    renderer.CreateTexture(&texture);
 
-    const Rect rect = { 200, 200, 300, 300 };
-    renderer.SetClipRect(rect);
+    // Materials set-up
+    Material noTextureMat = Material(nullptr);
+    renderer.CreateMaterial(&noTextureMat);
 
-    /*
-    renderer.SetClippingEnabled(false);
-    renderer.DrawRect(rect, RGB(0, 0, 255));
-    renderer.SetClippingEnabled(true);*/
+    Material mat1 = Material(&texture);
+    renderer.CreateMaterial(&mat1);
 
-   // renderer.DrawLine(pWindow, v6.Position, v7.Position, RGB(255, 0, 0), 1);
-
-    Mesh mesh = Mesh(3, 3);
+    // Meshes set-up
+    Mesh mesh = Mesh(3, 3, mat1);
     mesh.AddVertex(v1);
     mesh.AddVertex(v2);
     mesh.AddVertex(v3);
@@ -61,7 +63,8 @@ int main()
     mesh.AddIndex(1);
     mesh.AddIndex(2);
 
-    Mesh mesh2 = Mesh(3, 3);
+    
+    Mesh mesh2 = Mesh(3, 3, noTextureMat);
     mesh2.AddVertex(v4);
     mesh2.AddVertex(v5);
     mesh2.AddVertex(v6);

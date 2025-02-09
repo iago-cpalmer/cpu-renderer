@@ -8,8 +8,16 @@
 
 struct Vertex {
 	gmtl::Vec3f Position;
-	gmtl::Vec3f Color; // Color
-	gmtl::Vec2f UV;	// Uv coords
+	gmtl::Vec3f Color;
+	gmtl::Vec2f UV;
+};
+
+// Vertex output by Geometry Pass
+struct VertexGP {
+	gmtl::Vec3f Position;
+	gmtl::Vec3f Color;
+	gmtl::Vec2f UV;
+	uint32_t	MaterialId;
 };
 
 #endif // !VERTEX_H

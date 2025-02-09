@@ -7,13 +7,16 @@
 // ------------------------------------
 // Constructor
 // ------------------------------------
-Mesh::Mesh(int r_vertex_buffer_initial_capacity, int r_index_buffer_initial_capacity)
+
+
+Mesh::Mesh(int r_vertex_buffer_initial_capacity, int r_index_buffer_initial_capacity, Material& rp_mat)
 	: m_vbo(r_vertex_buffer_initial_capacity)
 	, m_ibo(r_index_buffer_initial_capacity)
 	, m_vertex_count(0)
 	, m_index_count(0)
+	, m_material_id(rp_mat.GetMaterialId())
 {
-	
+
 }
 
 // ------------------------------------

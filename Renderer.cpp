@@ -13,7 +13,7 @@ Renderer::Renderer()
 	, m_clip_rect()
 	, mp_graphic_buffers(nullptr)
 	, m_mesh_count(0)
-	, m_geom_output(INITIAL_GEOM_VERTEX_CAPACITY, INITIAL_GEOM_INDEX_CAPACITY)
+	, m_geom_output(INITIAL_GEOM_VERTEX_CAPACITY, INITIAL_GEOM_INDEX_CAPACITY, Material::NULL_MATERIAL)
 {
 }
 
@@ -51,14 +51,21 @@ void Renderer::SetGraphicBuffers(GraphicBuffers* rp_graphic_buffers)
 	mp_graphic_buffers = rp_graphic_buffers;
 }
 
-void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture) {
+void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, IRuint r_mat) {
 	
+	Texture* pTexture = nullptr;
+	IRuint texId = m_materials.at(r_mat)->GetTextureId();
+	if (texId != UINT_UNASSIGNED)
+	{
+		pTexture = m_textures.at(texId);
+	}
+
 	SortVertices(&r_v1, &r_v2, &r_v3);	
 	if (r_v2.Position[1] == r_v3.Position[1]) {
-		FillTriangleBottomFlat( r_v1, r_v2, r_v3, rp_texture);
+		FillTriangleBottomFlat( r_v1, r_v2, r_v3, pTexture);
 	}
 	else if (r_v2.Position[1] == r_v1.Position[1]) {
-		FillTriangleTopFlat(r_v1, r_v2, r_v3, rp_texture);
+		FillTriangleTopFlat(r_v1, r_v2, r_v3, pTexture);
 	}
 	else {
 		// Split in 2
@@ -85,7 +92,7 @@ void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_t
 		gmtl::Vec3f intermediateCoord = gmtl::Vec3f(x, y, z);
 
 		// Calculate intermediate uv coordinates
-		float u = Lerp(r_v1.UV[0], r_v3.UV[0], xl);
+		float u = Lerp(r_v1.UV[0], r_v3.UV[0], yl);
  		float v = Lerp(r_v1.UV[1], r_v3.UV[1], yl);
 
 		gmtl::Vec3f color = gmtl::Vec3f(
@@ -97,12 +104,21 @@ void Renderer::FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_t
 		Vertex p{ intermediateCoord, color, gmtl::Vec2f(u, v) };
 
 		if (r_v3.Position[0] > r_v1.Position[0]) {
-			FillTriangleBottomFlat(r_v1, r_v2, p, rp_texture);
-			FillTriangleTopFlat(p, r_v2, r_v3, rp_texture);
+			FillTriangleBottomFlat(r_v1, r_v2, p, pTexture);
+			FillTriangleTopFlat(p, r_v2, r_v3, pTexture);
 		}
 		else {
-			FillTriangleBottomFlat(r_v1, p, r_v2, rp_texture);
-			FillTriangleTopFlat(r_v2, p, r_v3, rp_texture);
+			if (p.Position[0] < r_v2.Position[0])
+			{
+				FillTriangleBottomFlat(r_v1, p, r_v2, pTexture);
+				FillTriangleTopFlat(r_v2, p, r_v3, pTexture);
+			}
+			else
+			{				
+				FillTriangleBottomFlat(r_v1, r_v2, p, pTexture);
+				FillTriangleTopFlat(p, r_v2, r_v3, pTexture);
+				
+			}	
 		}
 		
 	}
@@ -333,6 +349,22 @@ void Renderer::SetClippingEnabled(const bool r_clip_enabled)
 	m_geometry_clipping_enabled = r_clip_enabled;
 }
 
+size_t Renderer::CreateTexture(Texture* rp_texture)
+{
+	size_t id = m_textures.size();
+	m_textures.push_back(rp_texture);
+	rp_texture->SetId(id);
+	return id;
+}
+
+size_t Renderer::CreateMaterial(Material* rp_material)
+{
+	IRuint id = m_materials.size();
+	m_materials.push_back(rp_material);
+	rp_material->SetMaterialId(id);
+	return id;
+}
+
 // ====================================
 // Private
 // ====================================
@@ -347,6 +379,7 @@ inline float Renderer::Lerp(const float r_a, const float r_b, const float r_t) {
 
 void Renderer::GeometryPass()
 {
+	int triangleCount = 0;
 	int id1 = 0;
 	Mesh* pMesh;
 	
@@ -359,20 +392,35 @@ void Renderer::GeometryPass()
 			id1 = pMesh->GetIndexAt(i);
 
 			// Transform vertices
-			Vertex v = pMesh->GetVertexAt(id1);
+			Vertex meshVertex = pMesh->GetVertexAt(id1);
+			if (true)
+			{
+				int rx = rand() % 100;
+				int ry = rand() % 100;
+				meshVertex.Position = meshVertex.Position + gmtl::Vec3f(rx, ry, 0);
+				meshVertex.UV = pMesh->GetVertexAt(id1).UV;
+				meshVertex.Color = pMesh->GetVertexAt(id1).Color;
+			}
 			
-			int rx = rand() % 100;
-			int ry = rand() % 100;
-			v.Position = v.Position + gmtl::Vec3f(rx, ry, 0);
-			v.UV = pMesh->GetVertexAt(id1).UV;
-			v.Color = pMesh->GetVertexAt(id1).Color;
 			// Clip triangle, adding vertices to vertex output buffer. RasterizationPass will use it
 
 			// Add vertices to vertex output buffer
 			int initialId = m_geom_output.GetVertexCount();
-			m_geom_output.AddVertex(v);
+			m_geom_output.AddVertex(meshVertex);
 			m_geom_output.AddIndex(initialId++);
+			if (i % 3 == 0)
+			{
+				if (triangleCount < m_material_per_triangle.size())
+				{
+					m_material_per_triangle.at(triangleCount) = pMesh->GetMaterialId();
+				}
+				else {
+					m_material_per_triangle.push_back(pMesh->GetMaterialId());
+				}
+				triangleCount++;
+			}	
 		}
+
 	}
 	
 }
@@ -381,7 +429,7 @@ void Renderer::RasterizationPass()
 {
 	for (std::size_t i = 0; i < m_geom_output.GetIndexCount(); i += 3)
 	{
-		FillTriangle(m_geom_output.GetVertexAt(i), m_geom_output.GetVertexAt(i + 1), m_geom_output.GetVertexAt(i + 2), nullptr); // TODO: Pass texture
+		FillTriangle(m_geom_output.GetVertexAt(i), m_geom_output.GetVertexAt(i + 1), m_geom_output.GetVertexAt(i + 2), m_material_per_triangle.at(i/3));
 	}
 }
 

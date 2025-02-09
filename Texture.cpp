@@ -1,6 +1,7 @@
 #include "Texture.h"
 
 #include <algorithm>
+#include "GlobalDefs.h"
 
 // ====================================
 //  PUBLIC
@@ -9,7 +10,9 @@
 // --------------------------------
 //  Constructors
 // --------------------------------
-Texture::Texture(const char* file_name) {
+Texture::Texture(const char* file_name)
+    : m_texture_id(UINT_UNASSIGNED)
+{
     // Load image using stb_image
     mp_data = stbi_load(file_name, &m_width, &m_height, &m_channels, 0);
 

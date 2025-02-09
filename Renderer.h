@@ -10,6 +10,7 @@
 #include "Texture.h"
 #include "Rect.h"
 #include "Mesh.h"
+#include "Material.h"
 
 
 class Renderer
@@ -35,7 +36,7 @@ public:
 	
 	void DrawWireframe( Vertex r_v1, Vertex r_v2, Vertex r_v3);
 
-	void FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, Texture* rp_texture);
+	void FillTriangle(Vertex r_v1, Vertex r_v2, Vertex r_v3, IRuint r_mat_id);
 	void FillRectangle(const int r_xl, const int r_yt, const int r_xr, const int r_yb, COLORREF r_color);
 	void FillCircle(const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color);
 	void DrawCircle(const gmtl::Vec2i r_center, const int r_radius, COLORREF r_color);
@@ -45,6 +46,9 @@ public:
 	void SetClipRect(const Rect r_rect);
 
 	void SetClippingEnabled(const bool r_clip_enabled);
+
+	IRuint CreateTexture(Texture* rp_texture);
+	IRuint CreateMaterial(Material* rp_material);
 
 private:
 	// --------------------------------
@@ -66,10 +70,14 @@ private:
 
 	bool m_geometry_clipping_enabled = false;
 
+	std::vector<Material*> m_materials;
+	std::vector<Texture*> m_textures;
+
 	std::vector<Mesh*> m_render_queue;
 	std::size_t m_mesh_count;
 
 	Mesh m_geom_output;
+	std::vector<IRuint> m_material_per_triangle;
 
 	// --------------------------------
 	// Functions

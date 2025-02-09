@@ -4,6 +4,7 @@
 #include "stb_image.h"
 #include <iostream>
 #include <Windows.h>
+#include "GlobalDefs.h"
 
 enum class WrappingMode
 {
@@ -33,6 +34,15 @@ public:
 
     COLORREF GetColorAtUV(float r_u, float r_v) noexcept;
 
+    inline void SetId(IRuint r_id)
+    {
+        m_texture_id = r_id;
+    }
+    inline IRuint GetId()
+    {
+        return m_texture_id;
+    }
+
 private:
     // --------------------------------
     //  Constants
@@ -49,6 +59,8 @@ private:
     int m_channels;
 
     WrappingMode m_wrapping_mode;
+
+    IRuint m_texture_id;
 
     // --------------------------------
     //  Functions

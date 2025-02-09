@@ -1,7 +1,12 @@
-#include <vector>
-#include "Vertex.h"
 #ifndef MESH_H
 #define MESH_H
+
+#include <vector>
+#include "Vertex.h"
+#include "Texture.h"
+#include "GlobalDefs.h"
+#include "Material.h"
+
 
 class Mesh
 {
@@ -9,7 +14,7 @@ public:
 	// ------------------------------------
 	// Constructor
 	// ------------------------------------
-	Mesh(int r_vertex_buffer_initial_capacity, int r_index_buffer_initial_capacity);
+	Mesh(int r_vertex_buffer_initial_capacity, int r_index_buffer_initial_capacity, Material& rp_mat);
 
 	// ------------------------------------
 	// Methods
@@ -46,6 +51,14 @@ public:
 		return m_ibo[r_index];
 	}
 
+	inline void SetMaterial(Material* rp_mat)
+	{
+		m_material_id = rp_mat->GetMaterialId();
+	}
+	inline IRuint GetMaterialId()
+	{
+		return m_material_id;
+	}
 
 private:
 
@@ -58,6 +71,8 @@ private:
 
 	int m_vertex_count;
 	int m_index_count;
+
+	IRuint m_material_id;
 };
 
 #endif // !MESH_H
